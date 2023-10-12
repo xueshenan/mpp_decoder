@@ -63,10 +63,6 @@ add_library(osal STATIC
     linux/os_mem.c
     linux/os_env.c
     linux/os_log.cpp
-    windows/os_allocator.c
-    windows/os_mem.c
-    windows/os_env.c
-    windows/os_log.c
     ${MPP_ALLOCATOR}
     ${MPP_DRIVER}
 )
