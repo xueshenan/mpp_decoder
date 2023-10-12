@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-#if defined(_WIN32)
-#include "vld.h"
-#endif
-
-#define MODULE_TAG "mpi_dec_test"
-
 #include <string.h>
 #include <rockchip/rk_mpi.h>
 
@@ -81,11 +75,11 @@ static int dec_simple(MpiDecLoopData *data)
 
     if (pkt_eos) {
         if (data->frame_num < 0 || data->frame_num > data->frame_count) {
-            mpp_log_q(quiet, "%p loop again\n", ctx);
+            printf("%p loop again\n", ctx);
             reader_rewind(cmd->reader);
             pkt_eos = 0;
         } else {
-            mpp_log_q(quiet, "%p found last packet\n", ctx);
+            printf("%p found last packet\n", ctx);
             data->loop_end = 1;
         }
     }
@@ -125,10 +119,10 @@ static int dec_simple(MpiDecLoopData *data)
                     msleep(1);
                     goto try_again;
                 }
-                mpp_err("%p decode_get_frame failed too much time\n", ctx);
+                printf("%p decode_get_frame failed too much time\n", ctx);
             }
             if (ret) {
-                mpp_err("%p decode_get_frame failed ret %d\n", ret, ctx);
+                printf("%p decode_get_frame failed ret %d\n", ctx, ret);
                 break;
             }
 
@@ -140,8 +134,8 @@ static int dec_simple(MpiDecLoopData *data)
                     RK_U32 ver_stride = mpp_frame_get_ver_stride(frame);
                     RK_U32 buf_size = mpp_frame_get_buf_size(frame);
 
-                    mpp_log_q(quiet, "%p decode_get_frame get info changed found\n", ctx);
-                    mpp_log_q(quiet, "%p decoder require buffer w:h [%d:%d] stride [%d:%d] buf_size %d",
+                    printf("%p decode_get_frame get info changed found\n", ctx);
+                    printf("%p decoder require buffer w:h [%d:%d] stride [%d:%d] buf_size %d",
                               ctx, width, height, hor_stride, ver_stride, buf_size);
 
                     /*
@@ -208,21 +202,21 @@ static int dec_simple(MpiDecLoopData *data)
                         /* If buffer group is not set create one and limit it */
                         ret = mpp_buffer_group_get_internal(&data->frm_grp, MPP_BUFFER_TYPE_ION);
                         if (ret) {
-                            mpp_err("%p get mpp buffer group failed ret %d\n", ctx, ret);
+                            printf("%p get mpp buffer group failed ret %d\n", ctx, ret);
                             break;
                         }
 
                         /* Set buffer to mpp decoder */
                         ret = mpi->control(ctx, MPP_DEC_SET_EXT_BUF_GROUP, data->frm_grp);
                         if (ret) {
-                            mpp_err("%p set buffer group failed ret %d\n", ctx, ret);
+                            printf("%p set buffer group failed ret %d\n", ctx, ret);
                             break;
                         }
                     } else {
                         /* If old buffer group exist clear it */
                         ret = mpp_buffer_group_clear(data->frm_grp);
                         if (ret) {
-                            mpp_err("%p clear buffer group failed ret %d\n", ctx, ret);
+                            printf("%p clear buffer group failed ret %d\n", ctx, ret);
                             break;
                         }
                     }
@@ -230,7 +224,7 @@ static int dec_simple(MpiDecLoopData *data)
                     /* Use limit config to limit buffer count to 24 with buf_size */
                     ret = mpp_buffer_group_limit_config(data->frm_grp, buf_size, 24);
                     if (ret) {
-                        mpp_err("%p limit buffer group failed ret %d\n", ctx, ret);
+                        printf("%p limit buffer group failed ret %d\n", ctx, ret);
                         break;
                     }
 
@@ -240,7 +234,7 @@ static int dec_simple(MpiDecLoopData *data)
                      */
                     ret = mpi->control(ctx, MPP_DEC_SET_INFO_CHANGE_READY, NULL);
                     if (ret) {
-                        mpp_err("%p info change ready failed ret %d\n", ctx, ret);
+                        printf("%p info change ready failed ret %d\n", ctx, ret);
                         break;
                     }
                 } else {
@@ -270,7 +264,7 @@ static int dec_simple(MpiDecLoopData *data)
                         log_len += snprintf(log_buf + log_len, log_size - log_len,
                                             " err %x discard %x", err_info, discard);
                     }
-                    mpp_log_q(quiet, "%p %s\n", ctx, log_buf);
+                    //printf("%p %s\n", ctx, log_buf);
 
                     data->frame_count++;
                     if (data->fp_output && !err_info)
@@ -302,7 +296,7 @@ static int dec_simple(MpiDecLoopData *data)
             }
 
             if (frm_eos) {
-                mpp_log_q(quiet, "%p found last packet\n", ctx);
+                printf("%p found last packet\n", ctx);
                 break;
             }
 
@@ -401,7 +395,7 @@ int dec_decode(MpiDecTestCmd *cmd)
     if (cmd->have_output) {
         data.fp_output = fopen(cmd->file_output, "w+b");
         if (NULL == data.fp_output) {
-            mpp_err("failed to open output file %s\n", cmd->file_output);
+            printf("failed to open output file %s\n", cmd->file_output);
             goto MPP_TEST_OUT;
         }
     }
@@ -409,19 +403,19 @@ int dec_decode(MpiDecTestCmd *cmd)
     if (cmd->file_slt) {
         data.fp_verify = fopen(cmd->file_slt, "wt");
         if (!data.fp_verify)
-            mpp_err("failed to open verify file %s\n", cmd->file_slt);
+            printf("failed to open verify file %s\n", cmd->file_slt);
     }
 
     ret = mpp_packet_init(&packet, NULL, 0);
     if (ret) {
-        mpp_err("mpp_packet_init failed\n");
+        printf("mpp_packet_init failed\n");
         goto MPP_TEST_OUT;
     }
 
     // decoder demo
     ret = mpp_create(&ctx, &mpi);
     if (ret) {
-        mpp_err("mpp_create failed\n");
+        printf("mpp_create failed\n");
         goto MPP_TEST_OUT;
     }
 
@@ -430,7 +424,7 @@ int dec_decode(MpiDecTestCmd *cmd)
 
     ret = mpp_init(ctx, MPP_CTX_DEC, type);
     if (ret) {
-        mpp_err("%p mpp_init failed\n", ctx);
+        printf("%p mpp_init failed\n", ctx);
         goto MPP_TEST_OUT;
     }
 
@@ -439,7 +433,7 @@ int dec_decode(MpiDecTestCmd *cmd)
     /* get default config from decoder context */
     ret = mpi->control(ctx, MPP_DEC_GET_CFG, cfg);
     if (ret) {
-        mpp_err("%p failed to get decoder cfg ret %d\n", ctx, ret);
+        printf("%p failed to get decoder cfg ret %d\n", ctx, ret);
         goto MPP_TEST_OUT;
     }
 
@@ -449,20 +443,20 @@ int dec_decode(MpiDecTestCmd *cmd)
      */
     ret = mpp_dec_cfg_set_u32(cfg, "base:split_parse", need_split);
     if (ret) {
-        mpp_err("%p failed to set split_parse ret %d\n", ctx, ret);
+        printf("%p failed to set split_parse ret %d\n", ctx, ret);
         goto MPP_TEST_OUT;
     }
 
     ret = mpp_dec_cfg_set_u32(cfg, "base:fast_out", fast_out);
     if (ret) {
-        mpp_err("%p failed to set fast_out ret %d\n", ctx, ret);
+        printf("%p failed to set fast_out ret %d\n", ctx, ret);
         goto MPP_TEST_OUT;
     }
 
 
     ret = mpi->control(ctx, MPP_DEC_SET_CFG, cfg);
     if (ret) {
-        mpp_err("%p failed to set cfg %p ret %d\n", ctx, cfg, ret);
+        printf("%p failed to set cfg %p ret %d\n", ctx, cfg, ret);
         goto MPP_TEST_OUT;
     }
 
@@ -480,7 +474,7 @@ int dec_decode(MpiDecTestCmd *cmd)
 
     ret = pthread_create(&thd, &attr, thread_decode, &data);
     if (ret) {
-        mpp_err("failed to create thread for input ret %d\n", ret);
+        printf("failed to create thread for input ret %d\n", ret);
         goto MPP_TEST_OUT;
     }
 
@@ -500,7 +494,7 @@ int dec_decode(MpiDecTestCmd *cmd)
 
     ret = mpi->reset(ctx);
     if (ret) {
-        mpp_err("%p mpi->reset failed\n", ctx);
+        printf("%p mpi->reset failed\n", ctx);
         goto MPP_TEST_OUT;
     }
 
@@ -564,9 +558,9 @@ int main(int argc, char **argv)
 
     ret = dec_decode(&cmd_ctx);
     if (MPP_OK == ret)
-        mpp_log("test success max memory %.2f MB\n", cmd_ctx.max_usage / (float)(1 << 20));
+        printf("test success max memory %.2f MB\n", cmd_ctx.max_usage / (float)(1 << 20));
     else
-        mpp_err("test failed ret %d\n", ret);
+        printf("test failed ret %d\n", ret);
 
 RET:
     mpi_dec_test_cmd_deinit(&cmd_ctx);
