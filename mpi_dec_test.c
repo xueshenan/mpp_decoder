@@ -48,7 +48,6 @@ typedef struct {
     float           frame_rate;
     RK_S64          elapsed_time;
     RK_S64          delay;
-    FILE            *fp_verify;
     FrmCrc          checkcrc;
 } MpiDecLoopData;
 
@@ -270,11 +269,6 @@ static int dec_simple(MpiDecLoopData *data)
                     if (data->fp_output && !err_info)
                         dump_mpp_frame_to_file(frame, data->fp_output);
 
-                    if (data->fp_verify) {
-                        calc_frm_crc(frame, checkcrc);
-                        write_frm_crc(data->fp_verify, checkcrc);
-                    }
-
                     fps_calc_inc(cmd->fps);
                 }
                 frm_eos = mpp_frame_get_eos(frame);
@@ -373,8 +367,6 @@ int dec_decode(MpiDecTestCmd *cmd)
     MppFrame  frame     = NULL;
 
     // paramter for resource malloc
-    RK_U32 width        = cmd->width;
-    RK_U32 height       = cmd->height;
     MppCodingType type  = cmd->type;
 
     // config for runtime mode
@@ -388,7 +380,7 @@ int dec_decode(MpiDecTestCmd *cmd)
     MpiDecLoopData data;
     MPP_RET ret = MPP_OK;
 
-    mpp_log("mpi_dec_test start\n");
+    printf("mpi_dec_test start\n");
     memset(&data, 0, sizeof(data));
     pthread_attr_init(&attr);
 
@@ -398,12 +390,6 @@ int dec_decode(MpiDecTestCmd *cmd)
             printf("failed to open output file %s\n", cmd->file_output);
             goto MPP_TEST_OUT;
         }
-    }
-
-    if (cmd->file_slt) {
-        data.fp_verify = fopen(cmd->file_slt, "wt");
-        if (!data.fp_verify)
-            printf("failed to open verify file %s\n", cmd->file_slt);
     }
 
     ret = mpp_packet_init(&packet, NULL, 0);
@@ -419,8 +405,8 @@ int dec_decode(MpiDecTestCmd *cmd)
         goto MPP_TEST_OUT;
     }
 
-    mpp_log("%p mpi_dec_test decoder test start w %d h %d type %d\n",
-            ctx, width, height, type);
+    printf("%p mpi_dec_test decoder test start type %d\n",
+            ctx, type);
 
     ret = mpp_init(ctx, MPP_CTX_DEC, type);
     if (ret) {
@@ -498,6 +484,7 @@ int dec_decode(MpiDecTestCmd *cmd)
         goto MPP_TEST_OUT;
     }
 
+    return ret;
 MPP_TEST_OUT:
     if (data.packet) {
         mpp_packet_deinit(&data.packet);
@@ -522,11 +509,6 @@ MPP_TEST_OUT:
     if (data.fp_output) {
         fclose(data.fp_output);
         data.fp_output = NULL;
-    }
-
-    if (data.fp_verify) {
-        fclose(data.fp_verify);
-        data.fp_verify = NULL;
     }
 
     if (cfg) {

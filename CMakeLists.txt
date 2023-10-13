@@ -26,4 +26,5 @@ pkg_check_modules(ROCKCHIP_MPP rockchip_mpp REQUIRED IMPORTED_TARGET)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE 
 	PkgConfig::ROCKCHIP_MPP
-	osal)
+	osal
+	mpp_base)

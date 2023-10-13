@@ -22,12 +22,12 @@
 
 typedef void* MppTrie;
 
-/* spatial optimized tire tree */
+/* spatial optimized trie tree */
 typedef struct MppAcNode_t {
     RK_S16          next[16];
-    /* idx - tire node index in ascending order */
+    /* idx - trie node index in ascending order */
     RK_S32          idx;
-    /* id  - tire node carried payload data */
+    /* id  - trie node carried payload data */
     RK_S32          id;
 } MppTrieNode;
 
