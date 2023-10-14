@@ -35,7 +35,6 @@ typedef struct {
     /* input and output */
     MppBufferGroup  frm_grp;
     MppPacket       packet;
-    MppFrame        frame;
 
     FILE            *fp_output;
     RK_S32          frame_count;
@@ -317,7 +316,7 @@ static int dec_simple(MpiDecLoopData *data)
          * frame which resolution is 1080p needs 2 ms,so here we sleep 1ms
          * * is enough.
          */
-        msleep(1);
+        //msleep(1);
     } while (1);
 
     return ret;
@@ -353,9 +352,8 @@ int dec_decode(MpiDecTestCmd *cmd)
     MppCtx ctx          = NULL;
     MppApi *mpi         = NULL;
 
-    // input / output
+    // input
     MppPacket packet    = NULL;
-    MppFrame  frame     = NULL;
 
     // config for runtime mode
     MppDecCfg cfg       = NULL;
@@ -439,7 +437,6 @@ int dec_decode(MpiDecTestCmd *cmd)
     data.mpi            = mpi;
     data.loop_end       = 0;
     data.packet         = packet;
-    data.frame          = frame;
     data.frame_count    = 0;
     data.frame_num      = cmd->frame_num;
     data.quiet          = cmd->quiet;
@@ -477,11 +474,6 @@ MPP_TEST_OUT:
     if (data.packet) {
         mpp_packet_deinit(&data.packet);
         data.packet = NULL;
-    }
-
-    if (frame) {
-        mpp_frame_deinit(&frame);
-        frame = NULL;
     }
 
     if (ctx) {
