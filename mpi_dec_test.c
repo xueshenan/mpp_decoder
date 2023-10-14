@@ -48,7 +48,6 @@ typedef struct {
     float           frame_rate;
     RK_S64          elapsed_time;
     RK_S64          delay;
-    FrmCrc          checkcrc;
 } MpiDecLoopData;
 
 static int dec_simple(MpiDecLoopData *data)
@@ -62,7 +61,6 @@ static int dec_simple(MpiDecLoopData *data)
     MppPacket packet = data->packet;
     FileBufSlot *slot = NULL;
     RK_U32 quiet = data->quiet;
-    FrmCrc *checkcrc = &data->checkcrc;
 
     // when packet size is valid read the input binary file
     ret = reader_read(cmd->reader, &slot);
@@ -134,7 +132,7 @@ static int dec_simple(MpiDecLoopData *data)
                     RK_U32 buf_size = mpp_frame_get_buf_size(frame);
 
                     printf("%p decode_get_frame get info changed found\n", ctx);
-                    printf("%p decoder require buffer w:h [%d:%d] stride [%d:%d] buf_size %d",
+                    printf("%p decoder require buffer w:h [%d:%d] stride [%d:%d] buf_size %d\n",
                               ctx, width, height, hor_stride, ver_stride, buf_size);
 
                     /*
@@ -330,10 +328,6 @@ void *thread_decode(void *arg)
     MpiDecLoopData *data = (MpiDecLoopData *)arg;
     RK_S64 t_s, t_e;
 
-    memset(&data->checkcrc, 0, sizeof(data->checkcrc));
-    data->checkcrc.luma.sum = mpp_malloc(RK_ULONG, 512);
-    data->checkcrc.chroma.sum = mpp_malloc(RK_ULONG, 512);
-
     t_s = mpp_time();
 
     while (!data->loop_end) {
@@ -346,12 +340,9 @@ void *thread_decode(void *arg)
     data->frame_rate = (float)data->frame_count * 1000000 / data->elapsed_time;
     data->delay = data->first_frm - data->first_pkt;
 
-    mpp_log("decode %d frames time %lld ms delay %3d ms fps %3.2f\n",
+    printf("decode %d frames time %lld ms delay %3d ms fps %3.2f\n",
             data->frame_count, (RK_S64)(data->elapsed_time / 1000),
             (RK_S32)(data->delay / 1000), data->frame_rate);
-
-    MPP_FREE(data->checkcrc.luma.sum);
-    MPP_FREE(data->checkcrc.chroma.sum);
 
     return NULL;
 }
@@ -365,9 +356,6 @@ int dec_decode(MpiDecTestCmd *cmd)
     // input / output
     MppPacket packet    = NULL;
     MppFrame  frame     = NULL;
-
-    // paramter for resource malloc
-    MppCodingType type  = cmd->type;
 
     // config for runtime mode
     MppDecCfg cfg       = NULL;
@@ -406,9 +394,9 @@ int dec_decode(MpiDecTestCmd *cmd)
     }
 
     printf("%p mpi_dec_test decoder test start type %d\n",
-            ctx, type);
+            ctx, MPP_VIDEO_CodingAVC);
 
-    ret = mpp_init(ctx, MPP_CTX_DEC, type);
+    ret = mpp_init(ctx, MPP_CTX_DEC, MPP_VIDEO_CodingAVC);      //h.264 decoder
     if (ret) {
         printf("%p mpp_init failed\n", ctx);
         goto MPP_TEST_OUT;
@@ -466,9 +454,9 @@ int dec_decode(MpiDecTestCmd *cmd)
 
     if (cmd->frame_num < 0) {
         // wait for input then quit decoding
-        mpp_log("*******************************************\n");
-        mpp_log("**** Press Enter to stop loop decoding ****\n");
-        mpp_log("*******************************************\n");
+        printf("*******************************************\n");
+        printf("**** Press Enter to stop loop decoding ****\n");
+        printf("*******************************************\n");
 
         getc(stdin);
         data.loop_end = 1;

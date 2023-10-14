@@ -731,13 +731,14 @@ void mpi_dec_test_cmd_options(MpiDecTestCmd* cmd)
     if (cmd->quiet)
         return;
 
-    mpp_log("cmd parse result:\n");
-    mpp_log("input  file name: %s\n", cmd->file_input);
-    mpp_log("output file name: %s\n", cmd->file_output);
-    mpp_log("width      : %4d\n", cmd->width);
-    mpp_log("height     : %4d\n", cmd->height);
-    mpp_log("type       : %4d\n", cmd->type);
-    mpp_log("max frames : %4d\n", cmd->frame_num);
-    if (cmd->file_slt)
-        mpp_log("verify     : %s\n", cmd->file_slt);
+    printf("cmd parse result:\n");
+    printf("input  file name: %s\n", cmd->file_input);
+    printf("output file name: %s\n", cmd->file_output);
+    printf("width      : %4d\n", cmd->width);
+    printf("height     : %4d\n", cmd->height);
+    printf("type       : %4d\n", cmd->type);
+    printf("max frames : %4d\n", cmd->frame_num);
+    if (cmd->file_slt) {
+        printf("verify     : %s\n", cmd->file_slt);
+    }
 }
