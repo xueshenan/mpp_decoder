@@ -469,7 +469,6 @@ int dec_decode(MpiDecTestCmd *cmd)
         goto MPP_TEST_OUT;
     }
 
-    return ret;
 MPP_TEST_OUT:
     if (data.packet) {
         mpp_packet_deinit(&data.packet);
